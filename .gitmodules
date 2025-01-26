@@ -4,3 +4,6 @@
 [submodule "aave-looping-strategy-tests/lib/openzeppelin-contracts"]
 	path = aave-looping-strategy-tests/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "aave-looping-strategy-tests/lib/aave-v3-core"]
+	path = aave-looping-strategy-tests/lib/aave-v3-core
+	url = https://github.com/aave/aave-v3-core
