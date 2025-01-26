@@ -7,3 +7,6 @@
 [submodule "aave-looping-strategy-tests/lib/aave-v3-core"]
 	path = aave-looping-strategy-tests/lib/aave-v3-core
 	url = https://github.com/aave/aave-v3-core
+[submodule "aave-looping-strategy-tests/lib/v3-periphery"]
+	path = aave-looping-strategy-tests/lib/v3-periphery
+	url = https://github.com/uniswap/v3-periphery
