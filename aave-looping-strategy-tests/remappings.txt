@@ -1,7 +1,11 @@
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+aave-v3-core/=lib/aave-v3-core/
 erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/
 forge-std/=lib/forge-std/src/
 halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/
+openzeppelin-contracts/=lib/openzeppelin-contracts/
+protocol-v3/=lib/protocol-v3/
+v3-periphery/=lib/v3-periphery/v3-core/contracts/
 @openzeppelin/=/lib/openzeppelin-contracts/
-@uniswap/=lib/v3-periphery/v3-core/
+@uniswap/=lib/v3-periphery/
 @aave/=lib/protocol-v3/
