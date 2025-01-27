@@ -78,42 +78,46 @@ contract AaveLoopingStrategy is BaseStrategy {
     }
 
     /*//////////////////////////////////////////////////////////////
+                    REQUIRED ABSTRACT FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function _deployFunds(uint256 _amount) internal override {
+        ERC20(asset).approve(address(aavePool), _amount);
+        aavePool.supply(address(asset), _amount, address(this), 0);
+        totalCollateralAmount += _amount;
+    }
+
+    function _freeFunds(uint256 _amount) internal override {
+        aavePool.withdraw(address(asset), _amount, address(this));
+        totalCollateralAmount -= _amount;
+    }
+
+    function _harvestAndReport() internal override view returns (uint256) {
+        // Example logic to report profits, can be customized as needed
+        return totalCollateralAmount;
+    }
+
+    /*//////////////////////////////////////////////////////////////
                           INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     function _deposit(uint256 amount) internal {
-        // Approve AAVE Pool to spend asset
-        ERC20(asset).safeApprove(address(aavePool), amount);
-
-        // Supply asset to AAVE
+        ERC20(asset).approve(address(aavePool), amount);
         aavePool.supply(address(asset), amount, address(this), 0);
-
-        // Update storage
         totalCollateralAmount += amount;
-
-        // Execute looping logic
         _executeLoop(amount);
     }
 
     function _withdraw(uint256 amount) internal {
-        // Unwind positions by repaying debt and withdrawing collateral
         while (totalEthBorrowedAmount > 0) {
             uint256 wstETHToRepay = _calculateRepayAmount();
-
-            // Withdraw collateral from AAVE
             aavePool.withdraw(address(asset), wstETHToRepay, address(this));
-
-            // Swap collateral to ETH and repay debt
             uint256 ethReceived = _swapWstETHForETH(wstETHToRepay);
             aavePool.repay(address(0), ethReceived, 2, address(this));
-
-            // Update storage
             totalCollateralAmount -= wstETHToRepay;
             totalEthBorrowedAmount -= ethReceived;
-
             emit WithdrawUnwind(ethReceived, wstETHToRepay);
         }
-
         require(totalCollateralAmount >= amount, "Insufficient collateral");
         aavePool.withdraw(address(asset), amount, address(this));
         totalCollateralAmount -= amount;
@@ -121,32 +125,19 @@ contract AaveLoopingStrategy is BaseStrategy {
 
     function _executeLoop(uint256 initialAmount) internal {
         uint256 remainingCollateral = initialAmount;
-
         while (true) {
-            // Get current health factor
             (, , , , , uint256 healthFactor) = aavePool.getUserAccountData(address(this));
-
             if (healthFactor < maxHealthFactor) {
-                break; // Stop looping to avoid liquidation risk
+                break;
             }
-
-            // Borrow ETH against wstETH collateral
-            uint256 borrowAmount = remainingCollateral / 2; // Borrow 50% of collateral value
+            uint256 borrowAmount = remainingCollateral / 2;
             aavePool.borrow(address(0), borrowAmount, 2, 0, address(this));
-
-            // Swap borrowed ETH for more wstETH
             uint256 swappedAmount = _swapETHForWstETH(borrowAmount);
-
-            // Approve and supply the new wstETH
-            ERC20(asset).safeApprove(address(aavePool), swappedAmount);
+            ERC20(asset).approve(address(aavePool), swappedAmount);
             aavePool.supply(address(asset), swappedAmount, address(this), 0);
-
-            // Update storage
             totalCollateralAmount += swappedAmount;
             totalEthBorrowedAmount += borrowAmount;
-
             emit LoopExecuted(borrowAmount, swappedAmount);
-
             remainingCollateral = swappedAmount;
         }
     }
@@ -162,7 +153,6 @@ contract AaveLoopingStrategy is BaseStrategy {
             amountOutMinimum: 0,
             sqrtPriceLimitX96: 0
         });
-
         return swapRouter.exactInputSingle(params);
     }
 
@@ -177,19 +167,16 @@ contract AaveLoopingStrategy is BaseStrategy {
             amountOutMinimum: 0,
             sqrtPriceLimitX96: 0
         });
-
         return swapRouter.exactInputSingle(params);
     }
 
     function _getAaveRates() internal view returns (uint256 supplyRate, uint256 borrowRate) {
         DataTypes.ReserveData memory reserveData = aavePool.getReserveData(address(asset));
-
-        // Convert rates from Ray (1e27) to Wad (1e18)
         supplyRate = reserveData.currentLiquidityRate / 1e9;
         borrowRate = reserveData.currentVariableBorrowRate / 1e9;
     }
 
     function _calculateRepayAmount() internal view returns (uint256) {
-        return totalEthBorrowedAmount / 2; // Example logic, adjust as needed
+        return totalEthBorrowedAmount / 2;
     }
 }
