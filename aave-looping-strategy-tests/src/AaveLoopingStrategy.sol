@@ -4,9 +4,9 @@ pragma solidity >=0.8.18;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import {IPool} from "@aave/core-v3/contracts/interfaces/IPool.sol";
-import {DataTypes} from "@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol";
+import {ISwapRouter} from "@uniswap/contracts/interfaces/ISwapRouter.sol";
+import {IPool} from "@aave/contracts/interfaces/IPool.sol";
+import {DataTypes} from "@aave/contracts/protocol/libraries/types/DataTypes.sol";
 import {BaseStrategy} from "./BaseStrategy.sol";
 
 /**
