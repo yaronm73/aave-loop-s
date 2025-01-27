@@ -13,3 +13,6 @@
 [submodule "aave-looping-strategy-tests/lib/protocol-v3"]
 	path = aave-looping-strategy-tests/lib/protocol-v3
 	url = https://github.com/aave/protocol-v3
+[submodule "aave-looping-strategy-tests/lib/v3-core"]
+	path = aave-looping-strategy-tests/lib/v3-core
+	url = https://github.com/uniswap/v3-core
