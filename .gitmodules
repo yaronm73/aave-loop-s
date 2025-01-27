@@ -16,3 +16,6 @@
 [submodule "aave-looping-strategy-tests/lib/v3-core"]
 	path = aave-looping-strategy-tests/lib/v3-core
 	url = https://github.com/uniswap/v3-core
+[submodule "aave-looping-strategy-tests/lib/solmate"]
+	path = aave-looping-strategy-tests/lib/solmate
+	url = https://github.com/Rari-Capital/solmate
