@@ -16,6 +16,7 @@ contract AaveLoopingStrategyTest is Test {
     MockPoolAddressesProvider private mockProvider;
 
     address private user = address(0x1234);
+    address private owner = address(0xABCD);
     uint256 private initialBalance = 1_000_000 ether;
 
 function setUp() public {
@@ -29,7 +30,8 @@ uint256 depositAmount = 100 * 10**18; // wsteth with 18 decimals
         assetAddress,
         "Aave Looping Strategy",
         aavePoolAddress,
-        swapRouterAddress
+        swapRouterAddress,
+        owner
     );
 
     // Impersonate a user and mint tokens

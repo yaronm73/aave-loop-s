@@ -8,12 +8,13 @@ import {ISwapRouter} from "@uniswap/contracts/interfaces/ISwapRouter.sol";
 import {IPool} from "@aave/contracts/interfaces/IPool.sol";
 import {DataTypes} from "@aave/contracts/protocol/libraries/types/DataTypes.sol";
 import {BaseStrategy} from "./BaseStrategy.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title AaveLoopingStrategy
  * @notice Implements a looping strategy using AAVE and Uniswap for YieldNest.
  */
-contract AaveLoopingStrategy is BaseStrategy {
+contract AaveLoopingStrategy is BaseStrategy, Ownable {
     using Math for uint256;
     using SafeERC20 for ERC20;
 
@@ -41,24 +42,26 @@ contract AaveLoopingStrategy is BaseStrategy {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _asset, string memory _name, address _aavePool, address _swapRouter)
+    constructor(address _asset, string memory _name, address _aavePool, address _swapRouter, address _owner) 
+        Ownable(_owner)
         BaseStrategy(_asset, _name)
     {
         swapRouter = ISwapRouter(_swapRouter);
         aavePool = IPool(_aavePool);
+        _transferOwnership(_owner);
     }
 
     /*//////////////////////////////////////////////////////////////
                         EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function deposit(uint256 amount) external {
+    function deposit(uint256 amount) external onlyOwner() {
         require(amount > 0, "Amount must be greater than zero");
         ERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
         _deposit(amount);
     }
 
-    function withdraw(uint256 amount) external {
+    function withdraw(uint256 amount) external onlyOwner() {
         require(amount > 0, "Amount must be greater than zero");
         _withdraw(amount);
         ERC20(asset).safeTransfer(msg.sender, amount);
@@ -76,6 +79,7 @@ contract AaveLoopingStrategy is BaseStrategy {
         uint256 netRate = (supplyRate * totalCollateralAmount - borrowRate * totalEthBorrowedAmount) / totalCollateralAmount;
         return netRate;
     }
+
 
     /*//////////////////////////////////////////////////////////////
                     REQUIRED ABSTRACT FUNCTIONS
