@@ -3,59 +3,81 @@ pragma solidity >=0.8.18;
 
 import "forge-std/Test.sol";
 import "../src/AaveLoopingStrategy.sol";
-import {MockERC20} from "../lib/solmate/src/test/utils/mocks/MockERC20.sol";
+import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
 import {MockAavePool} from "./mocks/MockAavePool.sol";
 import {MockSwapRouter} from "./mocks/MockSwapRouter.sol";
+import {MockPoolAddressesProvider} from "./mocks/MockPoolAddressesProvider.sol";
 
 contract AaveLoopingStrategyTest is Test {
     AaveLoopingStrategy private strategy;
     MockERC20 private asset;
     MockAavePool private aavePool;
     MockSwapRouter private swapRouter;
+    MockPoolAddressesProvider private mockProvider;
 
     address private user = address(0x1234);
     uint256 private initialBalance = 1_000_000 ether;
 
-    function setUp() public {
-        // Deploy mock contracts
-        asset = new MockERC20("Mock Asset", "MCK", 18);
-        aavePool = new MockAavePool();
-        swapRouter = new MockSwapRouter();
+function setUp() public {
+    // Mainnet addresses for Aave V3 Pool and USDC
+    address aavePoolAddress = 0x7beA39867E4169AcD0FC34D4A2e9aA3962E49e22; // Aave V3 Pool
+    address swapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564; // Uniswap V3 SwapRouter
+    address assetAddress = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0; // USDC
+uint256 depositAmount = 100 * 10**18; // wsteth with 18 decimals
+    // Deploy the strategy
+    strategy = new AaveLoopingStrategy(
+        assetAddress,
+        "Aave Looping Strategy",
+        aavePoolAddress,
+        swapRouterAddress
+    );
 
-        // Mint initial balance to the user
-        asset.mint(user, initialBalance);
+    // Impersonate a user and mint tokens
+    user = 0x7E458BCa9fB7C5a9e6029946F549C5f904e18dCC; // Example address
+    uint256 userBalance = 1_000_000 * 10**18; 
 
-        // Deploy the strategy
-        strategy = new AaveLoopingStrategy(
-            address(asset),
-            "Aave Looping Strategy",
-            address(aavePool),
-            address(swapRouter)
-        );
+    vm.startPrank(user);
 
-        // Approve strategy to spend user’s asset
-        vm.startPrank(user);
-        asset.approve(address(strategy), type(uint256).max);
-        vm.stopPrank();
-    }
+    // Mint USDC to the user using the deal function
+    deal(assetAddress, user, userBalance);
 
-    function testDeposit() public {
-        uint256 depositAmount = 100 ether;
+    // Verify that the balance is set correctly
+    uint256 balance = MockERC20(assetAddress).balanceOf(user);
+    console.log("User USDC Balance:", balance);
 
-        // Perform deposit
-        vm.startPrank(user);
+    // Approve the strategy to spend user's USDC
+    MockERC20(assetAddress).approve(address(strategy), type(uint256).max);
+
         strategy.deposit(depositAmount);
-        vm.stopPrank();
+    vm.stopPrank();
 
-        // Assert the strategy's total collateral amount
-        assertEq(strategy.totalCollateralAmount(), depositAmount);
+    assertEq(strategy.totalCollateralAmount(), depositAmount);
+    assertEq(MockERC20(asset).balanceOf(user), initialBalance - depositAmount);
 
-        // Assert the Aave pool received the asset
-        assertEq(aavePool.supplyBalance(address(asset), address(strategy)), depositAmount);
+    vm.stopPrank();
+}
 
-        // Assert the user's balance decreased
-        assertEq(asset.balanceOf(user), initialBalance - depositAmount);
-    }
+
+// function testDeposit(assetAddress) public {
+//     uint256 depositAmount = 100 * 10**6; // USDC with 6 decimals
+
+//     vm.startPrank(user);
+//     // Mint USDC to the user using the deal function
+//     deal(assetAddress, user, userBalance);
+
+//     // Verify that the balance is set correctly
+//     uint256 balance = MockERC20(assetAddress).balanceOf(user);
+//     console.log("User USDC Balance:", balance);
+
+//     // Approve the strategy to spend user's USDC
+//     MockERC20(assetAddress).approve(address(strategy), type(uint256).max);
+
+//     strategy.deposit(depositAmount);
+//     vm.stopPrank();
+
+//     assertEq(strategy.totalCollateralAmount(), depositAmount);
+//     assertEq(MockERC20(asset).balanceOf(user), initialBalance - depositAmount);
+// }
 
     function testWithdraw() public {
         uint256 depositAmount = 100 ether;
@@ -73,7 +95,7 @@ contract AaveLoopingStrategyTest is Test {
         assertEq(strategy.totalCollateralAmount(), depositAmount - withdrawAmount);
 
         // Assert the Aave pool balance decreased
-        assertEq(aavePool.supplyBalance(address(asset), address(strategy)), depositAmount - withdrawAmount);
+assertEq(aavePool.supplyBalance(address(asset)), depositAmount - withdrawAmount);
 
         // Assert the user's balance increased
         assertEq(asset.balanceOf(user), initialBalance - depositAmount + withdrawAmount);

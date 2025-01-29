@@ -93,7 +93,7 @@ contract AaveLoopingStrategy is BaseStrategy {
     }
 
     function _harvestAndReport() internal override view returns (uint256) {
-        // Example logic to report profits, can be customized as needed
+        //Not used
         return totalCollateralAmount;
     }
 
